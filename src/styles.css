@@ -35,6 +35,8 @@ button, input { font-family: inherit; }
   width: 100dvw;
   height: 100dvh;
   overflow: hidden;
+  /* clip (unlike hidden) can't be scrolled by focus/scrollIntoView, which used to push the 3D view up */
+  overflow: clip;
   background:
     radial-gradient(ellipse at 20% 15%, rgba(124, 58, 237, 0.32), transparent 50%),
     radial-gradient(ellipse at 85% 22%, rgba(37, 99, 235, 0.34), transparent 52%),
@@ -1030,4 +1032,391 @@ dialog:not(.Drawer)[open] { display: flex; flex-direction: column; gap: 1rem; }
   height: 0.55rem;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+
+/* ============================================================================
+   Mockup theme (final layer): deep indigo stage, bold saturated mode cards,
+   big gold LUDO logo. Kept last so it wins over the earlier experiments above.
+   ============================================================================ */
+.home-screen {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(37, 99, 235, 0.55), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(217, 70, 239, 0.55), transparent 70%),
+    radial-gradient(ellipse 45% 60% at 0% 50%, rgba(124, 58, 237, 0.5), transparent 70%),
+    radial-gradient(ellipse 45% 60% at 100% 50%, rgba(29, 78, 216, 0.55), transparent 70%),
+    #120d4f;
+}
+
+#app-shell {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 52%, rgba(37, 99, 235, 0.5), transparent 70%),
+    radial-gradient(ellipse at 12% 10%, rgba(147, 51, 234, 0.55), transparent 50%),
+    radial-gradient(ellipse at 88% 12%, rgba(37, 99, 235, 0.55), transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(217, 70, 239, 0.4), transparent 55%),
+    #100c48;
+}
+
+/* Bigger hero logo, like the mockup */
+.hero-emblem-wrap {
+  transform: scale(1.38);
+  transform-origin: 50% 70%;
+  margin: 1.6rem 0 1.4rem;
+}
+
+.hero-ludo-word {
+  background: linear-gradient(180deg, #fffbe0 0%, #ffd23f 42%, #ff9500 78%, #e25b00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 3px #13246b;
+  filter:
+    drop-shadow(0 3px 0 #13246b)
+    drop-shadow(0 7px 0 #0a1240)
+    drop-shadow(0 0 22px rgba(255, 170, 0, 0.45))
+    drop-shadow(0 16px 26px rgba(0, 0, 0, 0.7));
+}
+
+.hero-arena-ribbon {
+  background: linear-gradient(180deg, #3b82f6, #1d3fae);
+  border-color: #93c5fd;
+  color: #fff;
+  box-shadow:
+    0 0 24px rgba(59, 130, 246, 0.75),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+/* Bold, saturated mode cards */
+.home-stage-content .home-mode-btn {
+  position: relative;
+  overflow: hidden;
+  border-width: 2px;
+}
+
+.home-stage-content .home-mode-btn::before {
+  /* thin glossy shine across the top, instead of a white haze over the card */
+  content: '';
+  position: absolute;
+  inset: 0 0 62% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.home-stage-content .home-mode-btn > * {
+  position: relative;
+}
+
+.home-stage-content .mode-bots {
+  background: linear-gradient(180deg, #2fe36b 0%, #0eaa4a 50%, #067733 100%);
+  border-color: #a7f3c0;
+  box-shadow: 0 0 34px rgba(22, 196, 90, 0.65), 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.home-stage-content .mode-create {
+  background: linear-gradient(180deg, #ffc21a 0%, #ff8a00 50%, #e35500 100%);
+  border-color: #ffe58a;
+  box-shadow: 0 0 34px rgba(255, 150, 20, 0.65), 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.home-stage-content .mode-join {
+  background: linear-gradient(180deg, #b45cff 0%, #8a25f0 50%, #5512c0 100%);
+  border-color: #e3b8ff;
+  box-shadow: 0 0 34px rgba(155, 48, 242, 0.7), 0 18px 38px rgba(0, 0, 0, 0.55);
+}
+
+.home-stage-content .home-mode-btn strong {
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.22), 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.home-stage-content .mode-desc {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.82rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* White round arrow button with the card's colour, as in the mockup */
+.home-stage-content .mode-arrow {
+  background: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.home-stage-content .mode-bots .mode-arrow { color: #0f9d48; }
+.home-stage-content .mode-create .mode-arrow { color: #ef7a00; }
+.home-stage-content .mode-join .mode-arrow { color: #7c22e0; }
+
+/* Name pill: glowing violet outline */
+.hero-pill-input-wrap {
+  background: rgba(20, 16, 80, 0.85);
+  border: 2px solid rgba(167, 139, 250, 0.9);
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 640px) {
+  .hero-emblem-wrap {
+    transform: scale(1.12);
+    margin: 1rem 0 0.8rem;
+  }
+}
+
+/* Keep the cards above the pedestal's glow */
+.home-stage-content .home-mode-grid {
+  position: relative;
+  z-index: 2;
+}
+.neon-pedestal-stage {
+  z-index: 0;
+}
+
+/* ---- Contrast pass (like the UNO game): near-black base, small dim glows, vivid solids ---- */
+.home-screen {
+  background:
+    radial-gradient(ellipse 55% 35% at 50% 0%, rgba(59, 130, 246, 0.28), transparent 70%),
+    radial-gradient(ellipse 50% 35% at 50% 100%, rgba(192, 38, 211, 0.3), transparent 70%),
+    radial-gradient(ellipse 35% 50% at 0% 55%, rgba(124, 58, 237, 0.28), transparent 70%),
+    radial-gradient(ellipse 35% 50% at 100% 55%, rgba(37, 99, 235, 0.28), transparent 70%),
+    #06051c;
+}
+
+#app-shell {
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 55%, rgba(37, 99, 235, 0.3), transparent 70%),
+    radial-gradient(ellipse at 10% 8%, rgba(147, 51, 234, 0.3), transparent 45%),
+    radial-gradient(ellipse at 90% 10%, rgba(37, 99, 235, 0.3), transparent 45%),
+    #050419;
+}
+
+.home-ray {
+  opacity: 0.35;
+}
+
+.home-stage-content .home-mode-btn::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
+}
+
+.home-stage-content .mode-bots {
+  background: linear-gradient(180deg, #22d860 0%, #0a9e40 55%, #05692b 100%);
+  border-color: #4ade80;
+}
+.home-stage-content .mode-create {
+  background: linear-gradient(180deg, #ffb703 0%, #fb7d00 55%, #d94c00 100%);
+  border-color: #fcd34d;
+}
+.home-stage-content .mode-join {
+  background: linear-gradient(180deg, #a63dff 0%, #7a12e6 55%, #4c0fb0 100%);
+  border-color: #d8b4fe;
+}
+
+.hero-pill-input-wrap {
+  background: rgba(10, 8, 40, 0.92);
+}
+
+#ludo-canvas {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- Phones: home mode cards as rows (icon | title over text | arrow) ---- */
+@media (max-width: 640px) {
+  .home-stage-content .home-mode-btn {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.85rem;
+    row-gap: 0.1rem;
+    align-items: center;
+    text-align: left;
+    min-height: 0;
+    padding: 0.85rem 1rem;
+  }
+  .home-stage-content .home-mode-btn .mode-icon {
+    grid-row: 1 / 3;
+    width: 3.2rem;
+    height: 3.2rem;
+    margin: 0;
+  }
+  .home-stage-content .home-mode-btn strong {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1.15rem;
+    white-space: nowrap;
+  }
+  .home-stage-content .home-mode-btn .mode-desc {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: none;
+    font-size: 0.78rem;
+  }
+  .home-stage-content .home-mode-btn .mode-arrow {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    margin: 0;
+  }
+}
+
+/* ---- Phones: compact top bar and bottom dock during play ---- */
+@media (max-width: 640px) {
+  .hud-top {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+  .hud-top .ludo-badge,
+  .hud-top .pill-caret {
+    display: none;
+  }
+  .table-status-pill {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 6px;
+    padding-inline: 10px;
+  }
+  #active-turn-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+  }
+  .top-right-cluster {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .coins-pill {
+    padding-inline: 8px;
+    font-size: 0.82rem;
+  }
+
+  .hud-bottom {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+  .turn-banner {
+    max-width: 100%;
+    font-size: 0.76rem;
+    padding: 0.35rem 0.85rem;
+    text-align: center;
+  }
+  .unified-dock {
+    width: 100%;
+    gap: 6px;
+    padding: 6px;
+    justify-content: space-between;
+  }
+  .roll-dice-btn {
+    flex: 0 0 auto;
+    min-height: 48px; /* easy thumb target */
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .unified-dock .emote-bar {
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: space-around;
+    padding: 2px 4px;
+  }
+  .unified-dock .emote-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 0.95rem;
+  }
+
+  /* Player pills sit above the banner + dock instead of under them */
+  .seat-bl,
+  .seat-br {
+    bottom: 8.4rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .unified-dock .emote-btn:nth-child(n + 5) {
+    display: none; /* keep 4 emotes on very small phones */
+  }
+  .roll-dice-btn {
+    padding-inline: 0.75rem;
+  }
+}
+
+/* Centre the home content but never cut off its top on short screens */
+.home-screen {
+  justify-content: safe center;
+  overflow-y: auto;
+}
+
+/* ---- Phones held sideways / short screens ---- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .home-screen {
+    justify-content: flex-start;
+    padding-top: 3.2rem;
+  }
+  .hero-emblem-wrap {
+    transform: scale(0.82);
+    margin: -0.6rem 0 -0.6rem;
+  }
+  .home-stage-content .home-mode-btn {
+    min-height: 0;
+    padding: 0.7rem 0.8rem;
+  }
+  .home-stage-content .mode-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+  .home-stage-content .home-mode-btn strong {
+    font-size: 1.05rem;
+  }
+  .home-stage-content .mode-desc {
+    font-size: 0.72rem;
+  }
+  .neon-pedestal-stage {
+    display: none;
+  }
+
+  /* In play: slim bars so the board gets the height */
+  .hud-top .ludo-badge {
+    display: none;
+  }
+  .turn-banner {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.8rem;
+  }
+  .roll-dice-btn {
+    min-height: 40px;
+    padding: 0.35rem 1rem;
+    font-size: 0.8rem;
+  }
+  .unified-dock {
+    padding: 4px 6px;
+  }
+  .unified-dock .emote-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .match-feed-box {
+    display: none;
+  }
+  .seat-bl,
+  .seat-br {
+    bottom: 4.6rem;
+  }
+  .seat-tl,
+  .seat-tr {
+    top: 3.6rem;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Keep "RED'S TURN" readable; the dice itself shows the roll on the board */
+  .table-status-pill .dice-pill-val {
+    display: none;
+  }
+  #active-turn-text {
+    min-width: 4.5rem;
+  }
+  .seat-bl,
+  .seat-br {
+    transform: scale(0.85);
+    transform-origin: bottom left;
+  }
 }

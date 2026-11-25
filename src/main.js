@@ -208,6 +208,11 @@ const ui = {
 };
 
 const arena = new Ludo3DArena(canvas);
+// Older browsers without overflow: clip: never let the shell scroll (it shifts the 3D view).
+const appShell = document.getElementById('app-shell');
+appShell?.addEventListener('scroll', () => {
+  if (appShell.scrollTop || appShell.scrollLeft) appShell.scrollTo(0, 0);
+});
 const game = new Ludo3DGame(arena, ui);
 
 function syncProfileUI() {
@@ -388,7 +393,9 @@ function hideDiceCursorTip() {
 }
 
 // Event Listeners
-canvas.addEventListener('pointerdown', (e) => game.handleCanvasTap(e.clientX, e.clientY));
+// 'click' (after the tap ends), not 'pointerdown': on phones a dialog opened on
+// touch-down receives the same tap's click on its backdrop and closes at once.
+canvas.addEventListener('click', (e) => game.handleCanvasTap(e.clientX, e.clientY));
 canvas.addEventListener('pointermove', (e) => {
   if (game.gameOver || game.waitingForAdminStart) {
     hideDiceCursorTip();

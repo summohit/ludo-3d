@@ -189,9 +189,9 @@ export class Ludo3DArena {
 
     // Concentric glowing electric-blue, magenta, and orange-gold neon floor rings
     const floorRings = [
-      { radius: 5.85, tube: 0.055, color: 0x38bdf8, y: -0.29 },
-      { radius: 6.55, tube: 0.06, color: 0xa855f7, y: -0.29 },
-      { radius: 7.25, tube: 0.055, color: 0xf97316, y: -0.28 },
+      { radius: 5.85, tube: 0.07, color: 0x3b82f6, y: -0.29 },
+      { radius: 6.55, tube: 0.05, color: 0x8b5cf6, y: -0.29 },
+      { radius: 7.25, tube: 0.04, color: 0xf97316, y: -0.28 },
     ];
     floorRings.forEach((fr) => {
       const rGeo = new THREE.TorusGeometry(fr.radius, fr.tube, 16, 84);
@@ -221,10 +221,11 @@ export class Ludo3DArena {
 
     // Crisp luminous white-cyan perimeter board trim
     const frameGeo = new THREE.BoxGeometry(boardSpan + 0.42, 0.08, boardSpan + 0.42);
+    // Glows through the gaps between tiles: the neon grid lines of the mockup
     const frameMat = new THREE.MeshStandardMaterial({
-      color: 0xe0f2fe,
-      emissive: 0x38bdf8,
-      emissiveIntensity: 1.35,
+      color: 0x172554,
+      emissive: 0x2563eb,
+      emissiveIntensity: 0.75,
       roughness: 0.15,
     });
     const frameMesh = new THREE.Mesh(frameGeo, frameMat);
@@ -233,20 +234,20 @@ export class Ludo3DArena {
 
     const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.93, 0.085, TILE_SIZE * 0.93);
     const edgeTileMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0xdbeafe,
-      emissiveIntensity: 0.25,
+      color: 0x101d52,
+      emissive: 0x0b1640,
+      emissiveIntensity: 0.4,
       roughness: 0.18,
       metalness: 0.0,
     });
     const innerTileMat = new THREE.MeshStandardMaterial({
-      color: 0x0d1b4c,
-      emissive: 0x0a1438,
-      emissiveIntensity: 0.3,
+      color: 0x0c1744,
+      emissive: 0x081133,
+      emissiveIntensity: 0.35,
       roughness: 0.22,
       metalness: 0.05,
     });
-    const starTex = createStarTileTexture('#0f172a', '#f8fafc');
+    const starTex = createStarTileTexture('#101d52', '#f8fafc');
     const starMat = new THREE.MeshStandardMaterial({
       map: starTex,
       roughness: 0.22,
@@ -303,7 +304,7 @@ export class Ludo3DArena {
     const yardGeo = new THREE.BoxGeometry(yardSpan, 0.14, yardSpan);
     const padGeo = new THREE.CylinderGeometry(0.27, 0.3, 0.065, 32);
 
-    const wellTints = [0x1c050a, 0x031a0d, 0x1c1402, 0x031229];
+    const wellTints = [0x080306, 0x030806, 0x080702, 0x030510]; // near-black wells
 
     yardCoords.forEach(({ seat, centerR, centerC }) => {
       const lc = LUDO_COLORS[seat];
@@ -321,11 +322,11 @@ export class Ludo3DArena {
       this.boardGroup.add(yard);
 
       // Deep color-tinted glossy well inside the vivid colored yard frame (matching mockup)
-      const innerGeo = new THREE.BoxGeometry(yardSpan * 0.72, 0.04, yardSpan * 0.72);
+      const innerGeo = new THREE.BoxGeometry(yardSpan * 0.8, 0.04, yardSpan * 0.8);
       const innerMat = new THREE.MeshStandardMaterial({
         color: wellTints[seat],
         emissive: lc.three,
-        emissiveIntensity: 0.08,
+        emissiveIntensity: 0.04,
         roughness: 0.18,
         metalness: 0.05,
       });
@@ -816,18 +817,74 @@ export class Ludo3DArena {
     return null;
   }
 
+  /**
+   * Frames the whole board on any screen: picks a viewing angle for the screen
+   * shape, then finds the closest camera distance at which every board corner
+   * (and the pawns at the back) is on screen, clear of the top bar and the
+   * bottom controls.
+   */
   _updateCameraForAspect() {
-    const aspect = window.innerWidth / window.innerHeight;
-    if (aspect < 0.78) {
-      this.camera.fov = 52;
-      this.baseCamPos.set(0, 14.8, 10.2);
-    } else if (aspect < 1.1) {
-      this.camera.fov = 48;
-      this.baseCamPos.set(0, 13.4, 9.2);
-    } else {
-      this.camera.fov = 43;
-      this.baseCamPos.set(0, 11.8, 8.2);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const aspect = w / h;
+    this.camera.aspect = aspect;
+
+    // Steeper (more top-down) on tall phones so the square board uses the width.
+    const elevationDeg = aspect < 0.8 ? 64 : aspect < 1.2 ? 58 : 52;
+    this.camera.fov = aspect < 0.8 ? 46 : 42;
+    const el = THREE.MathUtils.degToRad(elevationDeg);
+    const dir = new THREE.Vector3(0, Math.sin(el), Math.cos(el));
+
+    // Space taken by the HUD, in pixels (bigger bottom dock on phones).
+    const topPx = h < 500 ? 52 : 74;
+    const bottomPx = h < 500 ? 86 : w <= 640 ? 176 : 124;
+    const yMax = 1 - (2 * topPx) / h;
+    const yMin = -1 + (2 * bottomPx) / h;
+    const xMax = 0.97;
+
+    const half = 15 * TILE_SIZE * 0.5 + 0.35;
+    const pts = [
+      [-half, 0, -half], [half, 0, -half], [-half, 0, half], [half, 0, half],
+      [-half, 0.75, -half], [half, 0.75, -half],
+    ].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+
+    // Aim at the middle of the free area between the top bar and the dock.
+    const target = new THREE.Vector3(0, 0, 0);
+    const fits = (d) => {
+      this.camera.position.copy(target).addScaledVector(dir, d);
+      this.camera.lookAt(target);
+      this.camera.updateProjectionMatrix();
+      this.camera.updateMatrixWorld();
+      let top = -Infinity;
+      let bottom = Infinity;
+      let ok = true;
+      for (const p of pts) {
+        const v = p.clone().project(this.camera);
+        if (Math.abs(v.x) > xMax) ok = false;
+        top = Math.max(top, v.y);
+        bottom = Math.min(bottom, v.y);
+      }
+      return { ok: ok && top - bottom <= yMax - yMin, top, bottom };
+    };
+
+    let lo = 4;
+    let hi = 80;
+    for (let i = 0; i < 32; i++) {
+      const mid = (lo + hi) / 2;
+      if (fits(mid).ok) hi = mid;
+      else lo = mid;
     }
+    // Shift the view so the board sits centred in the free area.
+    const { top, bottom } = fits(hi);
+    const shiftNdc = (yMax + yMin) / 2 - (top + bottom) / 2;
+    const worldPerNdc = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * hi;
+    const up = new THREE.Vector3(0, Math.cos(el), -Math.sin(el)); // camera "up" on the ground plane
+    target.addScaledVector(up, -shiftNdc * worldPerNdc / Math.max(up.length(), 1e-6));
+    target.y = 0;
+
+    this.baseLookAt.copy(target);
+    this.currentLookAt.copy(target);
+    this.baseCamPos.copy(target).addScaledVector(dir, hi);
     this.camera.position.copy(this.baseCamPos);
     this.camera.lookAt(this.currentLookAt);
     this.camera.updateProjectionMatrix();
