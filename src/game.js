@@ -277,7 +277,12 @@ export class Ludo3DGame {
           sound.playSixChime();
           this.arena.triggerBurst(0, 0, p.color.three, 1.15);
         }
-        this.ui.pushMatchFeed?.(`${who} rolled a ${e.roll}${e.roll === 6 ? ' 🔥' : ''}`);
+        if (e.lucky) {
+          this.ui.showFloatingFX(`🍀 LUCKY 6 FOR ${p.rawName.toUpperCase()}!`, p.color.key);
+          this.ui.pushMatchFeed?.(`🍀 ${who === 'You' ? 'You' : p.rawName} got a Lucky 6 after a long wait!`);
+        } else {
+          this.ui.pushMatchFeed?.(`${who} rolled a ${e.roll}${e.roll === 6 ? ' 🔥' : ''}`);
+        }
         break;
       }
       case 'three_sixes':
@@ -446,7 +451,9 @@ export class Ludo3DGame {
       this.ui.showBanner(
         v.phase === 'choose'
           ? `You rolled ${v.dice}! Tap a glowing ${p.color.label} pawn to move`
-          : `⚡ Your Turn (${p.color.label})! Tap the 3D Dice or Roll button`,
+          : `⚡ Your Turn (${p.color.label})! Tap the 3D Dice or Roll button${
+              v.rules?.startOn1 && p.pawns.every((x) => x === -1) ? ' • a 6 or 1 brings a pawn out' : ''
+            }`,
         p.color.key
       );
     } else {

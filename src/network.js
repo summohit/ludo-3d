@@ -163,6 +163,10 @@ export class LudoNetworkClient {
     this._send({ type: 'toggle_bot', seat });
   }
 
+  setRules(rules) {
+    this._send({ type: 'set_rules', rules });
+  }
+
   requestStartMatch() {
     this._send({ type: 'start_match' });
   }

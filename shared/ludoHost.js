@@ -11,8 +11,8 @@ export class LudoHost {
    * @param {number} [opts.turnMs] time a human gets per step (roll or pick); null = no timer
    * @param {number} [opts.botThinkMs]
    */
-  constructor({ players, send, turnMs = 60_000, botThinkMs = 650, rng }) {
-    this.engine = new LudoEngine({ players, rng });
+  constructor({ players, send, turnMs = 60_000, botThinkMs = 650, rng, rules }) {
+    this.engine = new LudoEngine({ players, rng, rules });
     this.send = send;
     this.turnMs = turnMs;
     this.botThinkMs = botThinkMs;

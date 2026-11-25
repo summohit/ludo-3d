@@ -1420,3 +1420,39 @@ dialog:not(.Drawer)[open] { display: flex; flex-direction: column; gap: 1rem; }
     transform-origin: bottom left;
   }
 }
+
+/* Lobby: easier-start house rules */
+.room-rules-box {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.room-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  cursor: pointer;
+}
+.room-rule-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: #22c55e;
+  flex-shrink: 0;
+}
+.room-rule-row input:disabled {
+  cursor: default;
+}
+.room-rule-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+}
+.room-rule-row small {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}

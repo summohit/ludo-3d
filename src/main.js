@@ -262,6 +262,42 @@ function openMpModal(mode = 'create') {
   if (!mpDialog.open) mpDialog.showModal();
 }
 
+const RULE_LABELS = {
+  startOn1: ['🎲 6 or 1 brings a pawn out', 'Doubles your chance of starting.'],
+  luckySix: ['🍀 Lucky 6', 'After 8 rolls without a 6, your next roll is a 6.'],
+};
+
+/** Easier-start house rules in the lobby: the host can switch them, everyone sees them. */
+function renderRoomRules(room, isAdmin) {
+  let box = document.getElementById('room-rules-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'room-rules-box';
+    box.className = 'room-rules-box';
+    overlaySeatList.after(box);
+  }
+  const rules = room.rules || {};
+  box.replaceChildren(
+    ...Object.entries(RULE_LABELS).map(([key, [title, hint]]) => {
+      const label = document.createElement('label');
+      label.className = 'room-rule-row';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = Boolean(rules[key]);
+      input.disabled = !isAdmin;
+      input.addEventListener('change', () => network.setRules({ [key]: input.checked }));
+      const text = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = title;
+      const small = document.createElement('small');
+      small.textContent = hint;
+      text.append(strong, small);
+      label.append(input, text);
+      return label;
+    })
+  );
+}
+
 function renderWaitingRoom(room, localSeat) {
   if (!room || room.started) {
     tableWaitingOverlay.hidden = true;
@@ -304,6 +340,8 @@ function renderWaitingRoom(room, localSeat) {
     }
     overlaySeatList.appendChild(li);
   }
+
+  renderRoomRules(room, isAdmin);
 
   overlayAdminStartBtn.hidden = !isAdmin;
   overlayAdminStartBtn.textContent =

@@ -31,7 +31,7 @@ test('bot games always finish with a winner who has all 4 home', () => {
 });
 
 test('out-of-turn and illegal actions are rejected', () => {
-  const e = new LudoEngine({ players: seats(4), rng: () => 0.1 }); // always rolls 1
+  const e = new LudoEngine({ players: seats(4), rng: () => 0.1, rules: { startOn1: false } }); // always rolls 1
   e.start();
   assert.equal(e.act(1, { type: 'roll' }).error, 'not_your_turn');
   assert.equal(e.act(0, { type: 'move', pawn: 0 }).error, 'roll_first');

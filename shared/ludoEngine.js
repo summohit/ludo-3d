@@ -4,6 +4,16 @@
 import { SAFE_INDICES, getPawnGridPos } from './boardData.js';
 
 export const FINISH = 56; // progress: -1 yard, 0..50 track, 51..55 home column, 56 home
+export const LUCKY_SIX_AFTER = 8; // rolls without a 6 before the next roll is a guaranteed 6
+
+/** House rules that make the start easier. Both on unless the room host turns them off. */
+export const DEFAULT_RULES = { startOn1: true, luckySix: true };
+
+export function sanitizeRules(input = {}) {
+  const r = { ...DEFAULT_RULES };
+  for (const k of Object.keys(DEFAULT_RULES)) if (typeof input?.[k] === 'boolean') r[k] = input[k];
+  return r;
+}
 
 export class LudoEngine {
   /**
@@ -11,8 +21,9 @@ export class LudoEngine {
    * @param {{name:string,isBot:boolean,active:boolean}[]} opts.players exactly 4 seats
    * @param {() => number} [opts.rng]
    */
-  constructor({ players, rng = Math.random }) {
+  constructor({ players, rng = Math.random, rules }) {
     this.rng = rng;
+    this.rules = sanitizeRules(rules);
     this.players = players.map((p, seat) => ({
       seat,
       name: String(p.name || `Player ${seat + 1}`),
@@ -22,6 +33,7 @@ export class LudoEngine {
       pawns: [-1, -1, -1, -1],
       finished: 0,
       captures: 0,
+      rollsSinceSix: 0,
     }));
     this.current = 0;
     this.phase = 'roll'; // 'roll' | 'choose'
@@ -49,7 +61,8 @@ export class LudoEngine {
     const p = this.players[seat];
     const out = [];
     p.pawns.forEach((prog, idx) => {
-      if (prog === -1 ? roll === 6 : prog >= 0 && prog + roll <= FINISH) out.push(idx);
+      const canLeaveYard = roll === 6 || (this.rules.startOn1 && roll === 1);
+      if (prog === -1 ? canLeaveYard : prog >= 0 && prog + roll <= FINISH) out.push(idx);
     });
     return out;
   }
@@ -93,9 +106,13 @@ export class LudoEngine {
   }
 
   roll(seat, events) {
-    const roll = 1 + Math.floor(this.rng() * 6);
+    const p = this.players[seat];
+    // Lucky 6: after a long run without a 6, the next roll is a 6.
+    const lucky = this.rules.luckySix && p.rollsSinceSix >= LUCKY_SIX_AFTER;
+    const roll = lucky ? 6 : 1 + Math.floor(this.rng() * 6);
+    p.rollsSinceSix = roll === 6 ? 0 : p.rollsSinceSix + 1;
     this.dice = roll;
-    events.push({ type: 'roll', seat, roll });
+    events.push({ type: 'roll', seat, roll, lucky });
 
     if (roll === 6) {
       this.sixes += 1;
@@ -193,7 +210,7 @@ export class LudoEngine {
       const cur = p.pawns[idx];
       const next = cur === -1 ? 0 : cur + this.dice;
       let score;
-      if (cur === -1) score = 85; // get a pawn out
+      if (cur === -1) score = this.dice === 6 ? 85 : 75; // get a pawn out
       else if (next === FINISH) score = 120;
       else if (next >= 51) score = 70 + next; // safe in the home column
       else if (this.pawnsHitBy(seat, idx, next).length) score = 110;
@@ -231,6 +248,7 @@ export class LudoEngine {
       gameOver: this.gameOver,
       winner: this.winner,
       standings: this.standings,
+      rules: { ...this.rules },
       players: this.players.map((p) => ({
         seat: p.seat,
         name: p.name,

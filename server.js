@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { LudoHost } from './shared/ludoHost.js';
+import { sanitizeRules } from './shared/ludoEngine.js';
 
 const PORT = process.env.PORT || 4174;
 const ROOT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -110,6 +111,7 @@ function publicRoom(room) {
     hostId: room.hostId,
     started: room.started,
     gameOver: Boolean(room.game && room.game.engine.gameOver),
+    rules: room.rules,
     players,
   };
 }
@@ -161,6 +163,7 @@ function startGame(room) {
   room.seats.forEach((s) => s && (s.ready = false));
   const game = new LudoHost({
     turnMs: TURN_MS,
+    rules: room.rules,
     players: room.seats.map((s, seat) => ({
       name: s ? s.name : `Seat ${seat + 1}`,
       isBot: Boolean(s?.isBot),
@@ -292,6 +295,7 @@ const handlers = {
       hostId: null,
       started: false,
       seats: [newHumanSeat(ws, name), null, null, null],
+      rules: sanitizeRules(data.rules),
       game: null,
       emptyTimer: null,
     };
@@ -365,6 +369,13 @@ const handlers = {
     } else if (s.isBot && !isHuman(s)) {
       room.seats[seat] = null;
     }
+    broadcastRoom(room);
+  },
+
+  // Host only, between matches: easier-start house rules.
+  set_rules(ws, data, room, seatIdx) {
+    if (room.seats[seatIdx].id !== room.hostId || gameRunning(room)) return;
+    room.rules = sanitizeRules({ ...room.rules, ...data.rules });
     broadcastRoom(room);
   },
 
