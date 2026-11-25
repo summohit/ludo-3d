@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#050817" />
+    <title>LUDO 3D Neon Arena — Multiplayer Tabletop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./node_modules/three/build/three.module.js",
+          "gsap": "./node_modules/gsap/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body class="home-active">
+    <!-- Hamburger Navigation Drawer -->
+    <dialog class="Drawer" id="nav-drawer" aria-label="Ludo Game Menu">
+      <div class="Drawer-scroller">
+        <nav class="Drawer-sheet" aria-label="Main Menu">
+          <div class="drawer-header">
+            <div class="brand-chip">
+              <span class="ludo-badge">LUDO</span>
+              <span class="brand-tag">3D ARENA</span>
+            </div>
+            <button type="button" id="drawer-close" class="modal-close-btn" aria-label="Close menu" autofocus>
+              ✕
+            </button>
+          </div>
+
+          <div class="drawer-menu-list">
+            <button type="button" class="drawer-nav-item" id="menu-home-btn">
+              <span class="nav-icon">🏠</span>
+              <div>
+                <strong>Main Menu</strong>
+                <span>Play with bots, create or join a room</span>
+              </div>
+            </button>
+            <button type="button" class="drawer-nav-item" id="menu-mp-btn">
+              <span class="nav-icon">🌐</span>
+              <div>
+                <strong>Multiplayer Rooms</strong>
+                <span id="drawer-mp-sub">Create room or join by code</span>
+              </div>
+            </button>
+            <button type="button" class="drawer-nav-item" id="menu-rules-btn">
+              <span class="nav-icon">📜</span>
+              <div>
+                <strong>Ludo Rules &amp; Controls</strong>
+                <span>Safe stars, bonus rolls &amp; captures</span>
+              </div>
+            </button>
+            <button type="button" class="drawer-nav-item" id="menu-sound-btn">
+              <span class="nav-icon" id="drawer-sound-icon">🔊</span>
+              <div>
+                <strong id="drawer-sound-title">Sound &amp; Haptics: ON</strong>
+                <span>Toggle dice &amp; pawn SFX</span>
+              </div>
+            </button>
+          </div>
+        </nav>
+      </div>
+    </dialog>
+
+    <div id="app-shell">
+      <div class="arena-bg-layer" aria-hidden="true">
+        <span class="arena-nebula neb-1"></span>
+        <span class="arena-nebula neb-2"></span>
+        <span class="arena-nebula neb-3"></span>
+        <span class="bg-light-ray ray-1"></span>
+        <span class="bg-light-ray ray-2"></span>
+        <!-- Ambient floating 3D dice & pawns around the arena corners (matching right panel) -->
+        <svg class="bg-prop prop-dice-tl" viewBox="0 0 80 80">
+          <rect x="8" y="8" width="64" height="64" rx="16" fill="#e2e8f0" stroke="#94a3b8" stroke-width="3" />
+          <circle cx="26" cy="26" r="6" fill="#1e1b4b" />
+          <circle cx="54" cy="26" r="6" fill="#1e1b4b" />
+          <circle cx="40" cy="40" r="6" fill="#1e1b4b" />
+          <circle cx="26" cy="54" r="6" fill="#1e1b4b" />
+          <circle cx="54" cy="54" r="6" fill="#1e1b4b" />
+        </svg>
+        <svg class="bg-prop prop-dice-br" viewBox="0 0 80 80">
+          <rect x="8" y="8" width="64" height="64" rx="16" fill="#f1f5f9" stroke="#94a3b8" stroke-width="3" />
+          <circle cx="25" cy="24" r="5.5" fill="#0f172a" />
+          <circle cx="55" cy="24" r="5.5" fill="#0f172a" />
+          <circle cx="25" cy="40" r="5.5" fill="#0f172a" />
+          <circle cx="55" cy="40" r="5.5" fill="#0f172a" />
+          <circle cx="25" cy="56" r="5.5" fill="#0f172a" />
+          <circle cx="55" cy="56" r="5.5" fill="#0f172a" />
+        </svg>
+        <svg class="bg-prop prop-pawn-green" viewBox="0 0 64 88">
+          <defs>
+            <linearGradient id="bgPg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4ade80" />
+              <stop offset="100%" stop-color="#047857" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="22" r="14" fill="url(#bgPg)" />
+          <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#bgPg)" />
+          <ellipse cx="32" cy="76" rx="22" ry="7" fill="#10b981" />
+        </svg>
+        <svg class="bg-prop prop-pawn-yellow" viewBox="0 0 64 88">
+          <defs>
+            <linearGradient id="bgPy" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fef08a" />
+              <stop offset="100%" stop-color="#d97706" />
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="22" r="14" fill="url(#bgPy)" />
+          <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#bgPy)" />
+          <ellipse cx="32" cy="76" rx="22" ry="7" fill="#facc15" />
+        </svg>
+      </div>
+
+      <canvas id="ludo-canvas" aria-label="3D Ludo Tabletop Arena"></canvas>
+
+      <!-- In-Game Top Bar -->
+      <header class="hud-top">
+        <div class="top-left-cluster">
+          <button
+            type="button"
+            id="drawer-open"
+            class="circle-menu-btn"
+            aria-label="Open game menu"
+            aria-expanded="false"
+            aria-controls="nav-drawer"
+          >
+            ☰
+          </button>
+          <span class="ludo-badge" aria-hidden="true">LUDO</span>
+        </div>
+
+        <div class="table-status-pill" id="turn-status-pill">
+          <span class="color-orb" id="active-color-orb"></span>
+          <span id="active-turn-text">RED'S TURN</span>
+          <span class="dice-pill-val" id="dice-pill-val">🎲 —</span>
+          <span class="timer-pill-val" id="turn-timer-pill" title="Auto-plays dice when timer hits 0">⏱ 60s</span>
+        </div>
+
+        <div class="top-right-cluster">
+          <div class="coins-pill">🪙 <span id="top-coins-text">500</span></div>
+          <button type="button" class="hud-avatar-pill" id="hud-avatar-btn" aria-label="Open menu">
+            <span class="hud-avatar-circle" id="hud-avatar-letter">P</span>
+            <span class="pill-caret">▾</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Home Screen (Pixel-to-Pixel Mockup Match) -->
+      <section id="home-screen" class="home-screen" aria-labelledby="home-title">
+        <!-- Cosmic Light Rays & Floating Blurred 3D Dice -->
+        <div class="home-ambient" aria-hidden="true">
+          <span class="home-ray hr-1"></span>
+          <span class="home-ray hr-2"></span>
+          <svg class="home-float-dice hfd-left" viewBox="0 0 80 80">
+            <rect x="6" y="6" width="68" height="68" rx="18" fill="#cbd5e1" />
+            <circle cx="26" cy="26" r="6" fill="#1e1b4b" />
+            <circle cx="54" cy="26" r="6" fill="#1e1b4b" />
+            <circle cx="40" cy="40" r="6" fill="#1e1b4b" />
+            <circle cx="26" cy="54" r="6" fill="#1e1b4b" />
+            <circle cx="54" cy="54" r="6" fill="#1e1b4b" />
+          </svg>
+          <svg class="home-float-dice hfd-right" viewBox="0 0 80 80">
+            <rect x="6" y="6" width="68" height="68" rx="18" fill="#cbd5e1" />
+            <circle cx="26" cy="26" r="6" fill="#1e1b4b" />
+            <circle cx="54" cy="26" r="6" fill="#1e1b4b" />
+            <circle cx="26" cy="54" r="6" fill="#1e1b4b" />
+            <circle cx="54" cy="54" r="6" fill="#1e1b4b" />
+          </svg>
+        </div>
+
+        <div class="home-topbar">
+          <div class="home-brand">
+            <span class="online-pill">
+              <span class="online-dot" id="online-dot"></span>
+              <span id="online-text">Connecting…</span>
+            </span>
+          </div>
+          <div class="home-topbar-right">
+            <button type="button" class="home-avatar" id="home-avatar" aria-label="Open menu">P</button>
+          </div>
+        </div>
+
+        <div class="home-stage-content">
+          <!-- Hero Crowned 3D LUDO / 3D ARENA Emblem Flanked by Glossy 3D Pawns -->
+          <div class="hero-emblem-wrap">
+            <!-- Left Flanking 3D Pawns (Blue & Red) -->
+            <svg class="hero-pawn hp-blue" viewBox="0 0 64 88" aria-hidden="true">
+              <defs>
+                <linearGradient id="hpB" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#60a5fa" />
+                  <stop offset="100%" stop-color="#1d4ed8" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="22" r="14" fill="url(#hpB)" />
+              <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#hpB)" />
+              <ellipse cx="32" cy="76" rx="22" ry="7" fill="#3b82f6" />
+            </svg>
+            <svg class="hero-pawn hp-red" viewBox="0 0 64 88" aria-hidden="true">
+              <defs>
+                <linearGradient id="hpR" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#ff4d6d" />
+                  <stop offset="100%" stop-color="#b91c1c" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="22" r="14" fill="url(#hpR)" />
+              <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#hpR)" />
+              <ellipse cx="32" cy="76" rx="22" ry="7" fill="#ef233c" />
+            </svg>
+
+            <!-- Center Golden Crown + 3D LUDO + 3D ARENA Plaque -->
+            <div class="hero-logo-core">
+              <svg class="hero-crown" viewBox="0 0 96 56" aria-hidden="true">
+                <defs>
+                  <linearGradient id="crownG" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#fef08a" />
+                    <stop offset="55%" stop-color="#facc15" />
+                    <stop offset="100%" stop-color="#ea580c" />
+                  </linearGradient>
+                </defs>
+                <path d="M14 48 8 18l22 14L48 8l18 24 22-14-6 30H14Z" fill="url(#crownG)" stroke="#fef9c3" stroke-width="2.5" stroke-linejoin="round" />
+                <circle cx="8" cy="15" r="4.5" fill="#fef08a" />
+                <circle cx="48" cy="6" r="5.5" fill="#fef08a" />
+                <circle cx="88" cy="15" r="4.5" fill="#fef08a" />
+                <rect x="14" y="46" width="68" height="7" rx="3.5" fill="#d97706" />
+              </svg>
+              <div class="hero-ludo-word">LUDO</div>
+              <h1 id="home-title" class="hero-arena-ribbon">3D ARENA</h1>
+            </div>
+
+            <!-- Right Flanking 3D Pawns (Green & Yellow) -->
+            <svg class="hero-pawn hp-green" viewBox="0 0 64 88" aria-hidden="true">
+              <defs>
+                <linearGradient id="hpG" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#4ade80" />
+                  <stop offset="100%" stop-color="#047857" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="22" r="14" fill="url(#hpG)" />
+              <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#hpG)" />
+              <ellipse cx="32" cy="76" rx="22" ry="7" fill="#10b981" />
+            </svg>
+            <svg class="hero-pawn hp-yellow" viewBox="0 0 64 88" aria-hidden="true">
+              <defs>
+                <linearGradient id="hpY" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fef08a" />
+                  <stop offset="100%" stop-color="#d97706" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="22" r="14" fill="url(#hpY)" />
+              <path d="M16 74c2-22 8-38 16-38s14 16 16 38Z" fill="url(#hpY)" />
+              <ellipse cx="32" cy="76" rx="22" ry="7" fill="#facc15" />
+            </svg>
+          </div>
+
+          <form id="home-form" class="home-form" aria-labelledby="home-title">
+            <!-- Sleek Glowing Pill Name Input (Left Person Icon + Right Clear X Button) -->
+            <div class="hero-pill-input-wrap">
+              <span class="pill-left-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="home-player-name"
+                name="playerName"
+                required
+                minlength="2"
+                maxlength="18"
+                aria-label="Your display name"
+                placeholder="Player"
+                autocomplete="nickname"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
+              />
+              <button
+                type="button"
+                class="pill-clear-btn"
+                id="clear-name-btn"
+                aria-label="Clear player name"
+              >
+                ✕
+              </button>
+            </div>
+
+            <!-- 3 Tall Vibrant Centered Neon Mode Cards -->
+            <div class="home-mode-grid">
+              <button type="submit" name="mode" value="bots" class="home-mode-btn mode-bots">
+                <span class="mode-icon" aria-hidden="true">
+                  <svg viewBox="0 0 88 88" class="card-3d-svg">
+                    <defs>
+                      <linearGradient id="botShell" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="100%" stop-color="#a5b4fc" />
+                      </linearGradient>
+                    </defs>
+                    <rect x="41.5" y="13" width="5" height="11" rx="2.5" fill="#f59e0b" />
+                    <circle cx="44" cy="11" r="6" fill="#fef08a" />
+                    <rect x="8" y="38" width="9" height="22" rx="4.5" fill="#e0e7ff" />
+                    <rect x="71" y="38" width="9" height="22" rx="4.5" fill="#e0e7ff" />
+                    <rect x="14" y="21" width="60" height="51" rx="19" fill="url(#botShell)" />
+                    <rect x="21" y="34" width="46" height="28" rx="12" fill="#0f172a" />
+                    <circle cx="33" cy="46.5" r="5.5" fill="#38f8ff" />
+                    <circle cx="55" cy="46.5" r="5.5" fill="#38f8ff" />
+                    <path d="M39.5 54.5c2.2 2.1 6.8 2.1 9 0" fill="none" stroke="#22d3ee" stroke-width="2.8" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <strong>Play with Bots</strong>
+                <span class="mode-desc">Instant 4-player 3D match vs AI</span>
+                <span class="mode-arrow" aria-hidden="true">→</span>
+              </button>
+
+              <button type="submit" name="mode" value="create" class="home-mode-btn mode-create">
+                <span class="mode-icon" aria-hidden="true">
+                  <svg viewBox="0 0 88 88" class="card-3d-svg">
+                    <circle cx="44" cy="44" r="34" fill="rgba(255,255,255,0.16)" stroke="#fef08a" stroke-width="2.5" />
+                    <path d="M44 26c2.2 0 4 1.8 4 4v10h10c2.2 0 4 1.8 4 4s-1.8 4-4 4H48v10c0 2.2-1.8 4-4 4s-4-1.8-4-4V48H30c-2.2 0-4-1.8-4-4s1.8-4 4-4h10V30c0-2.2 1.8-4 4-4Z" fill="#ffffff" />
+                  </svg>
+                </span>
+                <strong>Create Room</strong>
+                <span class="mode-desc">Host a room and invite friends</span>
+                <span class="mode-arrow" aria-hidden="true">→</span>
+              </button>
+
+              <button type="submit" name="mode" value="join" class="home-mode-btn mode-join">
+                <span class="mode-icon" aria-hidden="true">
+                  <svg viewBox="0 0 88 88" class="card-3d-svg">
+                    <circle cx="44" cy="44" r="34" fill="rgba(255,255,255,0.15)" stroke="#e879f9" stroke-width="2.4" />
+                    <g transform="rotate(-45 44 44)">
+                      <path fill="#facc15" fill-rule="evenodd" d="M56 30a14 14 0 1 1 0 28 14 14 0 0 1 0-28Zm3 8.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" />
+                      <path fill="#facc15" d="M17 40.5h29v7.5H39v5.2a2.4 2.4 0 0 1-2.4 2.4h-2.4a2.4 2.4 0 0 1-2.4-2.4V48h-3.6v6a2.4 2.4 0 0 1-2.4 2.4h-2.8a2.4 2.4 0 0 1-2.4-2.4V48H17a3.5 3.5 0 0 1-3.5-3.5v-.5a3.5 3.5 0 0 1 3.5-3.5Z" />
+                    </g>
+                  </svg>
+                </span>
+                <strong>Join Room</strong>
+                <span class="mode-desc">Enter a room code or name</span>
+                <span class="mode-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Luminous Multi-Ring Neon Pedestal Stage Underneath Cards -->
+          <div class="neon-pedestal-stage" aria-hidden="true">
+            <span class="pedestal-ring pr-outer"></span>
+            <span class="pedestal-ring pr-mid"></span>
+            <span class="pedestal-ring pr-inner"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 Corner Seat Badges (Red BL, Green TL, Yellow TR, Blue BR) with Circular Countdown Rings -->
+      <div class="seat-badge seat-bl" id="seat-0">
+        <div class="seat-reaction-bubble" id="reaction-0"></div>
+        <div class="seat-avatar-ring-wrap">
+          <svg class="seat-timer-svg" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="timer-track" cx="22" cy="22" r="19" />
+            <circle class="timer-arc" id="timer-arc-0" cx="22" cy="22" r="19" />
+          </svg>
+          <span class="seat-color-dot dot-red"></span>
+        </div>
+        <div class="seat-meta">
+          <span class="seat-name" id="name-0">Player (You)</span>
+          <span class="seat-cards" id="home-0">0 / 4 Home</span>
+        </div>
+      </div>
+
+      <div class="seat-badge seat-tl" id="seat-1">
+        <div class="seat-reaction-bubble" id="reaction-1"></div>
+        <div class="seat-avatar-ring-wrap">
+          <svg class="seat-timer-svg" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="timer-track" cx="22" cy="22" r="19" />
+            <circle class="timer-arc" id="timer-arc-1" cx="22" cy="22" r="19" />
+          </svg>
+          <span class="seat-color-dot dot-green"></span>
+        </div>
+        <div class="seat-meta">
+          <span class="seat-name" id="name-1">Nova (Bot)</span>
+          <span class="seat-cards" id="home-1">0 / 4 Home</span>
+        </div>
+      </div>
+
+      <div class="seat-badge seat-tr" id="seat-2">
+        <div class="seat-reaction-bubble" id="reaction-2"></div>
+        <div class="seat-avatar-ring-wrap">
+          <svg class="seat-timer-svg" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="timer-track" cx="22" cy="22" r="19" />
+            <circle class="timer-arc" id="timer-arc-2" cx="22" cy="22" r="19" />
+          </svg>
+          <span class="seat-color-dot dot-yellow"></span>
+        </div>
+        <div class="seat-meta">
+          <span class="seat-name" id="name-2">Apex (Bot)</span>
+          <span class="seat-cards" id="home-2">0 / 4 Home</span>
+        </div>
+      </div>
+
+      <div class="seat-badge seat-br" id="seat-3">
+        <div class="seat-reaction-bubble" id="reaction-3"></div>
+        <div class="seat-avatar-ring-wrap">
+          <svg class="seat-timer-svg" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="timer-track" cx="22" cy="22" r="19" />
+            <circle class="timer-arc" id="timer-arc-3" cx="22" cy="22" r="19" />
+          </svg>
+          <span class="seat-color-dot dot-blue"></span>
+        </div>
+        <div class="seat-meta">
+          <span class="seat-name" id="name-3">Blaze (Bot)</span>
+          <span class="seat-cards" id="home-3">0 / 4 Home</span>
+        </div>
+      </div>
+
+      <!-- Multiplayer Room Waiting Overlay (Vacant Seats + Admin Start Only) -->
+      <section id="table-waiting-overlay" class="table-waiting-overlay" hidden>
+        <div class="waiting-card">
+          <div class="waiting-header">
+            <div>
+              <span class="mp-eyebrow">MULTIPLAYER LUDO LOBBY</span>
+              <h2 class="waiting-room-title">Room: <span id="overlay-room-name">ludo</span></h2>
+            </div>
+            <div class="waiting-code-box">
+              <span class="code-label">CODE</span>
+              <strong id="overlay-room-code">------</strong>
+            </div>
+          </div>
+          <p class="waiting-hint" id="overlay-waiting-status">
+            Empty seats remain <strong>VACANT</strong> until players join. Game waits for the Admin to start!
+          </p>
+          <ul class="waiting-seats-grid" id="overlay-seat-list"></ul>
+          <div class="waiting-actions">
+            <button type="button" class="pill-btn" id="overlay-copy-code-btn">📋 Copy Code</button>
+            <button type="button" class="pill-btn" id="overlay-copy-link-btn">🔗 Copy Invite Link</button>
+            <button type="button" class="primary-modal-btn" id="overlay-admin-start-btn">▶ Start Game (Admin)</button>
+            <button type="button" class="danger-modal-btn" id="overlay-leave-room-btn">Leave Room</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Floating Action Callout -->
+      <div id="fx-callout" class="fx-callout" aria-live="polite"></div>
+
+      <!-- Cursor-Following Dice Turn Indicator Tooltip -->
+      <div id="dice-cursor-tip" class="dice-cursor-tip" hidden aria-hidden="true">
+        <span class="tip-dot" id="dice-tip-dot"></span>
+        <span id="dice-tip-text">🔒 Wait! Nova's Turn</span>
+      </div>
+
+      <!-- Live Match Feed (Last 3 Plays) -->
+      <aside class="match-feed-box" id="match-feed-box" aria-label="Recent Plays">
+        <div class="match-feed-header">
+          <span class="feed-live-dot"></span>
+          <span class="feed-title">LAST PLAYS</span>
+        </div>
+        <ul class="match-feed-list" id="match-feed-list"></ul>
+      </aside>
+
+      <!-- On-Page 3D Camera Switcher -->
+      <button type="button" class="camera-fab-btn" id="camera-switch-btn" title="Switch 3D Camera View">
+        🎥 <span id="camera-view-label">3D View</span>
+      </button>
+
+      <!-- Bottom Unified Dock: Roll 3D Dice + Emoji Reactions -->
+      <footer class="hud-bottom">
+        <div class="turn-banner" id="turn-banner" role="status" aria-live="polite">
+          Choose a game mode to begin
+        </div>
+        <div class="unified-dock">
+          <button type="button" class="roll-dice-btn" id="roll-dice-btn">
+            <span class="dice-btn-icon">🎲</span>
+            <span id="roll-btn-text">ROLL 3D DICE</span>
+          </button>
+          <div class="emote-bar" aria-label="Send emoji reaction">
+            <button type="button" class="emote-btn" data-emote="🔥">🔥</button>
+            <button type="button" class="emote-btn" data-emote="😂">😂</button>
+            <button type="button" class="emote-btn" data-emote="😱">😱</button>
+            <button type="button" class="emote-btn" data-emote="👏">👏</button>
+            <button type="button" class="emote-btn" data-emote="😎">😎</button>
+            <button type="button" class="emote-btn" data-emote="💔">💔</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Multiplayer Create / Join Modal -->
+    <dialog id="multiplayer-dialog" closedby="any" class="mp-modal" data-mode="create" aria-labelledby="mp-dialog-title">
+      <div class="dialog-header-row">
+        <div>
+          <span class="mp-eyebrow">3D LUDO MULTIPLAYER</span>
+          <h1 id="mp-dialog-title" class="dialog-title">Create a New Room</h1>
+        </div>
+        <button type="button" class="modal-close-btn" id="close-mp-btn" aria-label="Close">✕</button>
+      </div>
+
+      <div class="mp-mode-switch">
+        <button type="button" class="mp-switch-btn active" id="mp-tab-create" data-switch="create">Create Room</button>
+        <button type="button" class="mp-switch-btn" id="mp-tab-join" data-switch="join">Join Room</button>
+      </div>
+
+      <p class="dialog-notice" id="mp-status-banner" role="status" aria-live="polite">
+        Name your room. Other seats stay VACANT until friends join.
+      </p>
+
+      <div id="mp-entry-forms" data-mode="create">
+        <form id="create-room-form" class="mp-card-form">
+          <div class="field">
+            <label for="create-room-name">Room Name <span class="req-star">*</span></label>
+            <input type="text" id="create-room-name" required minlength="2" maxlength="24" value="ludo-party" placeholder="e.g. ludo-party" />
+          </div>
+          <div class="field">
+            <label for="create-player-name">Admin Display Name <span class="req-star">*</span></label>
+            <input type="text" id="create-player-name" required minlength="2" maxlength="18" value="Player" />
+          </div>
+          <button type="submit" class="primary-modal-btn">Create Room &amp; Open Lobby →</button>
+        </form>
+
+        <form id="join-room-form" class="mp-card-form">
+          <div class="field">
+            <label for="join-player-name">Your Display Name <span class="req-star">*</span></label>
+            <input type="text" id="join-player-name" required minlength="2" maxlength="18" value="Player" />
+          </div>
+          <div class="field">
+            <label for="join-room-code">6-Char Room Code or Room Name <span class="req-star">*</span></label>
+            <input type="text" id="join-room-code" required minlength="2" maxlength="24" placeholder="e.g. K7X9M2 or ludo-party" />
+          </div>
+          <button type="submit" class="secondary-modal-btn">Join 3D Ludo Room →</button>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Ludo Rules Dialog -->
+    <dialog id="rules-dialog" closedby="any" aria-labelledby="rules-dialog-title">
+      <div class="dialog-header-row">
+        <h1 id="rules-dialog-title" class="dialog-title">📜 Ludo 3D Arena Rules</h1>
+        <button type="button" class="modal-close-btn" id="close-rules-btn" aria-label="Close">✕</button>
+      </div>
+      <ul class="rules-list">
+        <li><strong>Roll a 6 to Launch:</strong> Roll a <strong>6</strong> to bring a pawn out of your Home Yard onto your colored Start square.</li>
+        <li><strong>Bonus Rolls:</strong> Rolling a <strong>6</strong>, capturing an opponent's pawn, or reaching the Center Home Crown grants an instant <strong>Bonus Roll</strong>! (Three 6s in a row forfeits your turn).</li>
+        <li><strong>Safe Star Shields (★):</strong> Pawns standing on any colored Start tile or Star ★ tile are protected and cannot be captured.</li>
+        <li><strong>Knockout Captures:</strong> Landing on an opponent's pawn on a normal tile blasts it back to their Home Yard in 3D!</li>
+        <li><strong>Win Condition:</strong> First player to bring all <strong>4 pawns</strong> into the Center Home Crown wins!</li>
+      </ul>
+    </dialog>
+
+    <!-- Victory Podium Dialog -->
+    <dialog id="victory-dialog" closedby="any" aria-labelledby="victory-dialog-title">
+      <div class="victory-header">
+        <span class="victory-trophy">🏆</span>
+        <h1 id="victory-dialog-title" class="dialog-title">Ludo Champion!</h1>
+        <p class="victory-subtitle" id="victory-subtitle">All 4 pawns reached home!</p>
+      </div>
+      <ol class="victory-podium-list" id="victory-podium-list"></ol>
+      <form method="dialog" class="dialog-footer stacked">
+        <button type="submit" value="rematch" class="primary-modal-btn" autofocus>Play Another 3D Match →</button>
+        <button type="submit" value="home" class="secondary-modal-btn">Back to Main Menu</button>
+      </form>
+    </dialog>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
