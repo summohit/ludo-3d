@@ -81,16 +81,69 @@ const overlayWaitingStatus = document.getElementById('overlay-waiting-status');
 const overlaySeatList = document.getElementById('overlay-seat-list');
 const overlayAdminStartBtn = document.getElementById('overlay-admin-start-btn');
 
+const fullscreenEmojiLayer = document.getElementById('fullscreen-emoji-layer');
+const clashOverlay = document.getElementById('clash-duel-overlay');
+const clashAttackerCube = document.getElementById('clash-attacker-cube');
+const clashDefenderCube = document.getElementById('clash-defender-cube');
+const clashAttackerName = document.getElementById('clash-attacker-name');
+const clashDefenderName = document.getElementById('clash-defender-name');
+const clashResultBanner = document.getElementById('clash-result-banner');
+
 let fxTimer = null;
 const reactionTimers = new Map();
 
-function showSeatReaction(seat, emoji) {
+function triggerFullscreenEmoji(emoji, senderName = '') {
+  if (!fullscreenEmojiLayer) return;
+
+  // 1. Giant Hero Center Emoji + Sender Pill
+  const heroWrap = document.createElement('div');
+  heroWrap.className = 'fs-hero-emoji-wrap';
+  const heroGlyph = document.createElement('span');
+  heroGlyph.className = 'fs-hero-emoji';
+  heroGlyph.textContent = emoji;
+  heroWrap.appendChild(heroGlyph);
+  if (senderName) {
+    const tag = document.createElement('span');
+    tag.className = 'fs-hero-sender';
+    tag.textContent = `${senderName} reacted`;
+    heroWrap.appendChild(tag);
+  }
+  fullscreenEmojiLayer.appendChild(heroWrap);
+  setTimeout(() => heroWrap.remove(), 1750);
+
+  // 2. Full-screen Facebook / WhatsApp rising emoji fountain (22 floating emojis)
+  for (let i = 0; i < 22; i++) {
+    const el = document.createElement('span');
+    el.className = 'fs-rain-emoji';
+    el.textContent = emoji;
+    const leftPct = 4 + Math.random() * 92;
+    const sizeRem = 1.8 + Math.random() * 2.1;
+    const durSec = 1.65 + Math.random() * 1.15;
+    const delaySec = Math.random() * 0.48;
+    el.style.left = `${leftPct}%`;
+    el.style.fontSize = `${sizeRem.toFixed(2)}rem`;
+    el.style.setProperty('--dur', `${durSec.toFixed(2)}s`);
+    el.style.setProperty('--delay', `${delaySec.toFixed(2)}s`);
+    el.style.setProperty('--sway1', `${((Math.random() - 0.5) * 60).toFixed(0)}px`);
+    el.style.setProperty('--sway2', `${((Math.random() - 0.5) * 75).toFixed(0)}px`);
+    el.style.setProperty('--sway3', `${((Math.random() - 0.5) * 55).toFixed(0)}px`);
+    el.style.setProperty('--rot1', `${((Math.random() - 0.5) * 40).toFixed(0)}deg`);
+    el.style.setProperty('--rot2', `${((Math.random() - 0.5) * 45).toFixed(0)}deg`);
+    el.style.setProperty('--rot3', `${((Math.random() - 0.5) * 50).toFixed(0)}deg`);
+    fullscreenEmojiLayer.appendChild(el);
+    setTimeout(() => el.remove(), (durSec + delaySec) * 1000 + 150);
+  }
+}
+
+function showSeatReaction(seat, emoji, senderName = '') {
   const bubble = document.getElementById(`reaction-${seat}`);
-  if (!bubble) return;
-  bubble.textContent = emoji;
-  bubble.classList.add('show');
-  if (reactionTimers.has(seat)) clearTimeout(reactionTimers.get(seat));
-  reactionTimers.set(seat, setTimeout(() => bubble.classList.remove('show'), 1800));
+  if (bubble) {
+    bubble.textContent = emoji;
+    bubble.classList.add('show');
+    if (reactionTimers.has(seat)) clearTimeout(reactionTimers.get(seat));
+    reactionTimers.set(seat, setTimeout(() => bubble.classList.remove('show'), 1800));
+  }
+  triggerFullscreenEmoji(emoji, senderName);
 }
 
 const ui = {
@@ -134,6 +187,34 @@ const ui = {
     fxCallout.classList.add('visible');
     if (fxTimer) clearTimeout(fxTimer);
     fxTimer = setTimeout(() => fxCallout.classList.remove('visible'), 1500);
+  },
+
+  playClashDuel(attackerName, attackerColor, defenderName, defenderColor) {
+    if (!clashOverlay) return Promise.resolve();
+    const aCol = attackerColor || LUDO_COLORS[0];
+    const dCol = defenderColor || LUDO_COLORS[1];
+
+    clashAttackerCube.style.background = `linear-gradient(145deg, ${aCol.glow}, ${aCol.hex}, ${aCol.dark})`;
+    clashAttackerCube.style.boxShadow = `0 0 34px ${aCol.glow}, inset 0 4px 12px rgba(255,255,255,0.45)`;
+    clashDefenderCube.style.background = `linear-gradient(145deg, ${dCol.glow}, ${dCol.hex}, ${dCol.dark})`;
+    clashDefenderCube.style.boxShadow = `0 0 34px ${dCol.glow}, inset 0 4px 12px rgba(255,255,255,0.45)`;
+
+    clashAttackerName.textContent = attackerName;
+    clashDefenderName.textContent = defenderName;
+    clashResultBanner.textContent = `⚔️ ${String(attackerName).toUpperCase()} WINS KNOCKOUT!`;
+
+    clashOverlay.hidden = false;
+    clashOverlay.classList.remove('animate');
+    void clashOverlay.offsetWidth;
+    clashOverlay.classList.add('animate');
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        clashOverlay.classList.remove('animate');
+        clashOverlay.hidden = true;
+        resolve();
+      }, 1380);
+    });
   },
 
   clearMatchFeed() {
@@ -423,8 +504,8 @@ const network = new LudoNetworkClient({
     sound.playLeaveTone();
     ui.pushMatchFeed?.(`🚪 ${name} left the room`);
   },
-  onRoomEmote(seat, _name, emote) {
-    showSeatReaction(seat, emote);
+  onRoomEmote(seat, playerName, emote) {
+    showSeatReaction(seat, emote, playerName);
   },
 });
 
@@ -611,13 +692,18 @@ document.getElementById('camera-switch-btn').addEventListener('click', () => {
 document.querySelectorAll('.emote-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const emote = btn.dataset.emote;
+    const myName = game.players[game.localSeat]?.rawName || profile.displayName;
     if (network.isInRoom()) {
       network.sendEmote(emote);
     } else {
-      showSeatReaction(game.localSeat, emote);
+      showSeatReaction(game.localSeat, emote, myName);
       const botSeats = [1, 2, 3];
       const randomBot = botSeats[Math.floor(Math.random() * botSeats.length)];
-      setTimeout(() => showSeatReaction(randomBot, emote === '😱' ? '😂' : '🔥'), 520);
+      const botName = game.players[randomBot]?.rawName || 'Bot';
+      setTimeout(
+        () => showSeatReaction(randomBot, emote === '😱' ? '😂' : '🔥', botName),
+        950
+      );
     }
   });
 });

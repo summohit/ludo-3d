@@ -302,10 +302,12 @@ export class Ludo3DGame {
         const g = getPawnGridPos(e.victim, e.pawn, e.from);
         const w = gridToWorld(g.row, g.col);
         sound.playCaptureBoom();
-        this.arena.cinematicSwoopTo(w.x, w.z, 0.65);
+        this.arena.cinematicSwoopTo(w.x, w.z, 1.15);
         this.arena.triggerBurst(w.x, w.z, victim.color.three, 1.65);
-        this.ui.showFloatingFX(`💥 ${p.rawName.toUpperCase()} CAPTURED ${victim.rawName.toUpperCase()}!`, p.color.key);
         this.ui.pushMatchFeed?.(`💥 ${p.rawName} knocked out ${victim.rawName}!`);
+        if (this.ui.playClashDuel) {
+          await this.ui.playClashDuel(p.rawName, p.color, victim.rawName, victim.color);
+        }
         await this.animateCaptureReturnToHome(e.victim, e.pawn, e.from);
         victim.pawns[e.pawn] = -1;
         break;

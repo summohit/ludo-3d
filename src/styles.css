@@ -1456,3 +1456,226 @@ dialog:not(.Drawer)[open] { display: flex; flex-direction: column; gap: 1rem; }
   color: #94a3b8;
   font-size: 0.72rem;
 }
+
+
+/* ============================================================================
+   Full-Screen Facebook / WhatsApp Style Emoji Reaction Fountain
+   ============================================================================ */
+.fullscreen-emoji-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 45;
+}
+
+.fs-hero-emoji-wrap {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%) scale(0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  animation: heroEmojiPop 1.65s cubic-bezier(0.18, 1.45, 0.35, 1) forwards;
+}
+
+.fs-hero-emoji {
+  font-size: clamp(4.8rem, 11vw, 7.2rem);
+  line-height: 1;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+}
+
+.fs-hero-sender {
+  padding: 0.32rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(9, 13, 30, 0.88);
+  border: 1.5px solid rgba(250, 204, 21, 0.75);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes heroEmojiPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30%) scale(0.2);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -52%) scale(1.16);
+  }
+  34% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -72%) scale(0.85);
+  }
+}
+
+.fs-rain-emoji {
+  position: fixed;
+  bottom: -4.5rem;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+  animation: fsEmojiFloat var(--dur, 2.2s) cubic-bezier(0.2, 0.8, 0.3, 1) var(--delay, 0s) forwards;
+}
+
+@keyframes fsEmojiFloat {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.45) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translate3d(var(--sway1, 18px), -20dvh, 0) scale(1.15) rotate(var(--rot1, 14deg));
+  }
+  55% {
+    opacity: 0.96;
+    transform: translate3d(var(--sway2, -22px), -62dvh, 0) scale(1) rotate(var(--rot2, -14deg));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--sway3, 12px), -108dvh, 0) scale(0.85) rotate(var(--rot3, 20deg));
+  }
+}
+
+/* ============================================================================
+   Cinematic 2-Dice Knockout Clash Duel Overlay
+   ============================================================================ */
+.clash-duel-overlay[hidden] {
+  display: none;
+}
+
+.clash-duel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.48), rgba(4, 7, 22, 0.82));
+  backdrop-filter: blur(5px);
+}
+
+.clash-arena {
+  position: relative;
+  width: min(92vw, 32rem);
+  height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.2rem;
+}
+
+.clash-fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.fighter-cube {
+  width: 6.2rem;
+  height: 6.2rem;
+  border-radius: 1.35rem;
+  border: 3px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.4rem;
+  box-shadow:
+    inset 0 4px 14px rgba(255, 255, 255, 0.45),
+    0 18px 40px rgba(0, 0, 0, 0.65);
+}
+
+.fighter-label {
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(9, 13, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.clash-impact-burst {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 5.5rem;
+  opacity: 0;
+  filter: drop-shadow(0 0 28px #facc15);
+}
+
+.clash-result-banner {
+  padding: 0.55rem 1.6rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #facc15, #f97316);
+  color: #090d16;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: 0 0 36px rgba(250, 204, 21, 0.75);
+  transform: scale(0.6);
+  opacity: 0;
+}
+
+/* Active Clash Keyframes */
+.clash-duel-overlay.animate .fighter-left {
+  animation: attackerClash 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.clash-duel-overlay.animate .fighter-right {
+  animation: defenderKO 1.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.clash-duel-overlay.animate .clash-impact-burst {
+  animation: clashBoom 1.35s ease-out forwards;
+}
+
+.clash-duel-overlay.animate .clash-result-banner {
+  animation: clashBannerPop 1.35s cubic-bezier(0.18, 1.4, 0.4, 1) forwards;
+}
+
+@keyframes attackerClash {
+  0% { transform: translateX(-80px) scale(0.75) rotate(-14deg); opacity: 0; }
+  22% { transform: translateX(0px) scale(1) rotate(-8deg); opacity: 1; }
+  38% { transform: translateX(92px) scale(1.18) rotate(14deg); }
+  52% { transform: translateX(52px) scale(1.24) rotate(-6deg); }
+  100% { transform: translateX(65px) scale(1.22) rotate(0deg); opacity: 1; }
+}
+
+@keyframes defenderKO {
+  0% { transform: translateX(80px) scale(0.75) rotate(14deg); opacity: 0; }
+  22% { transform: translateX(0px) scale(1) rotate(8deg); opacity: 1; }
+  38% { transform: translateX(-85px) scale(1.05) rotate(-12deg); }
+  55% { transform: translateX(45px) translateY(-35px) scale(0.88) rotate(45deg); opacity: 0.9; }
+  100% { transform: translateX(220px) translateY(-120px) scale(0.35) rotate(220deg); opacity: 0; }
+}
+
+@keyframes clashBoom {
+  0%, 33% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  42% { opacity: 1; transform: translate(-50%, -50%) scale(1.45) rotate(12deg); }
+  62% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1) rotate(-8deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+}
+
+@keyframes clashBannerPop {
+  0%, 40% { opacity: 0; transform: scale(0.5); }
+  55% { opacity: 1; transform: scale(1.08); }
+  75% { opacity: 1; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1); }
+}
