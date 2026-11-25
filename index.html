@@ -280,7 +280,7 @@
                 minlength="2"
                 maxlength="18"
                 aria-label="Your display name"
-                placeholder="Player"
+                placeholder="Enter your name"
                 autocomplete="nickname"
                 autocorrect="off"
                 autocapitalize="none"
@@ -520,7 +520,7 @@
           </div>
           <div class="field">
             <label for="create-player-name">Admin Display Name <span class="req-star">*</span></label>
-            <input type="text" id="create-player-name" required minlength="2" maxlength="18" value="Player" />
+            <input type="text" id="create-player-name" required minlength="2" maxlength="18" placeholder="Enter your name" autocomplete="nickname" />
           </div>
           <button type="submit" class="primary-modal-btn">Create Room &amp; Open Lobby →</button>
         </form>
@@ -528,7 +528,7 @@
         <form id="join-room-form" class="mp-card-form">
           <div class="field">
             <label for="join-player-name">Your Display Name <span class="req-star">*</span></label>
-            <input type="text" id="join-player-name" required minlength="2" maxlength="18" value="Player" />
+            <input type="text" id="join-player-name" required minlength="2" maxlength="18" placeholder="Enter your name" autocomplete="nickname" />
           </div>
           <div class="field">
             <label for="join-room-code">6-Char Room Code or Room Name <span class="req-star">*</span></label>

@@ -119,6 +119,47 @@ class LudoSoundEngine {
     });
     this.vibrate([25, 30, 50]);
   }
+
+  /** Bright rising two-note chime: someone joined the room. */
+  playJoinChime() {
+    if (this.muted) return;
+    this._init();
+    if (!this.ctx) return;
+    [[659.25, 0], [987.77, 0.11], [1318.5, 0.22]].forEach(([freq, offset]) => {
+      const now = this.ctx.currentTime + offset;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    });
+    this.vibrate([20, 40, 20]);
+  }
+
+  /** Soft falling tone: someone left. */
+  playLeaveTone() {
+    if (this.muted) return;
+    this._init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(260, now + 0.3);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.36);
+  }
 }
 
 export const sound = new LudoSoundEngine();

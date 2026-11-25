@@ -32,11 +32,13 @@ drawer.addEventListener('click', (e) => {
 
 // Local Profile
 const STORAGE_KEY = 'ludo_3d_profile_v1';
-const profile = { displayName: 'Player', coins: 500 };
+const profile = { displayName: '', coins: 500 }; // name must be typed by the player
 try {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) Object.assign(profile, JSON.parse(raw));
 } catch (_) {}
+// Older versions saved the default "Player" as the name; that's not a real name.
+if (!profile.displayName || profile.displayName.trim().toLowerCase() === 'player') profile.displayName = '';
 
 function saveProfile() {
   try {
@@ -148,7 +150,7 @@ const ui = {
   },
 
   openVictoryModal(winner, isMe, standings) {
-    if (isMe) {
+    if (isMe && !network.isInRoom()) {
       profile.coins += 300;
       saveProfile();
       syncProfileUI();
@@ -166,7 +168,11 @@ const ui = {
     standings.forEach((s, idx) => {
       const li = document.createElement('li');
       li.className = `podium-row ${s.isWinner ? 'winner-row' : ''}`;
-      li.innerHTML = `<span>${medals[idx] || idx + 1} ${s.name}</span><span>${s.homeCount}/4 Home • ${s.captures} 💥</span>`;
+      const left = document.createElement('span');
+      left.textContent = `${medals[idx] || idx + 1} ${s.name}`;
+      const right = document.createElement('span');
+      right.textContent = `${s.homeCount}/4 Home • ${s.captures} 💥`;
+      li.append(left, right);
       list.appendChild(li);
     });
     victoryDialog.returnValue = '';
@@ -216,7 +222,7 @@ appShell?.addEventListener('scroll', () => {
 const game = new Ludo3DGame(arena, ui);
 
 function syncProfileUI() {
-  const ch = (profile.displayName || 'P').trim().charAt(0).toUpperCase() || 'P';
+  const ch = (profile.displayName || '?').trim().charAt(0).toUpperCase() || '?';
   homeAvatar.textContent = ch;
   hudAvatarLetter.textContent = ch;
   document.getElementById('top-coins-text').textContent = String(profile.coins);
@@ -228,9 +234,10 @@ function syncProfileUI() {
 
 function showHomeScreen() {
   if (network.isInRoom()) network.leaveRoom();
+  game.stopLocalGame();
   game.stopTurnTimer();
+  game.view = null;
   tableWaitingOverlay.hidden = true;
-  game.gameOver = true;
   homeScreen.hidden = false;
   document.body.classList.add('home-active');
 }
@@ -265,9 +272,13 @@ function renderWaitingRoom(room, localSeat) {
   overlayRoomCode.textContent = room.code;
   const isAdmin = network.isHost();
 
-  overlayWaitingStatus.innerHTML = isAdmin
-    ? `You are the <strong>Room Admin</strong>. Other seats are <strong>VACANT</strong> waiting for friends (Code: <strong>${room.code}</strong>). Game waits until you click Start Game!`
-    : `Joined <strong>${room.roomName}</strong>! Waiting for Room Admin to start...`;
+  // Built from text nodes: names come from other players.
+  const strong = (t) => Object.assign(document.createElement('strong'), { textContent: t });
+  overlayWaitingStatus.replaceChildren(
+    ...(isAdmin
+      ? ['You are the ', strong('Room Admin'), '. Share the code ', strong(room.code), ' with friends, then click Start Game.']
+      : ['Joined ', strong(room.roomName), '. Waiting for the room admin to start...'])
+  );
 
   overlaySeatList.innerHTML = '';
   for (let s = 0; s < 4; s++) {
@@ -275,9 +286,15 @@ function renderWaitingRoom(room, localSeat) {
     const li = document.createElement('li');
     li.className = `waiting-seat-slot ${occ ? '' : 'vacant'}`;
     const colLabel = LUDO_COLORS[s].label;
-    li.innerHTML = `<span style="font-size:0.7rem;color:#94a3b8;font-weight:700">${colLabel.toUpperCase()} SEAT ${s === 0 ? '• ADMIN' : ''}</span><strong>${occ ? (s === localSeat ? `${occ.name} (You)` : occ.name) : 'Vacant — Waiting...'}</strong>`;
+    const isRoomHost = occ && occ.id === room.hostId;
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:0.7rem;color:#94a3b8;font-weight:700';
+    label.textContent = `${colLabel.toUpperCase()} SEAT${isRoomHost ? ' • ADMIN' : ''}${occ?.away ? ' • 📡 RECONNECTING' : ''}`;
+    const nameEl = document.createElement('strong');
+    nameEl.textContent = occ ? (s === localSeat ? `${occ.name} (You)` : occ.name) : 'Vacant — Waiting...';
+    li.append(label, nameEl);
 
-    if (isAdmin && s > 0 && (!occ || occ.isBot)) {
+    if (isAdmin && s !== localSeat && (!occ || occ.isBot)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'seat-bot-toggle-btn';
@@ -296,24 +313,27 @@ function renderWaitingRoom(room, localSeat) {
 }
 
 const network = new LudoNetworkClient({
-  onConnectionChange(connected) {
+  onConnectionChange(connected, inRoom) {
     onlineDot.classList.toggle('live', connected);
     if (!connected) onlineText.textContent = 'Offline • Solo Ready';
+    if (!connected && inRoom) ui.showBanner('Connection lost • Reconnecting...', 'red');
   },
   onOnlineCount(count) {
     onlineDot.classList.add('live');
     onlineText.textContent = `Online • ${count} ${count === 1 ? 'player' : 'players'}`;
   },
-  onRoomJoined(room, seat, lastState) {
+  onRoomJoined(room, seat) {
     hideHomeScreen();
     if (mpDialog.open) mpDialog.close();
     if (!room.started) {
       game.enterRoomWaitingState(room, seat);
       renderWaitingRoom(room, seat);
     } else {
+      // Joined or rejoined a running match: the server sends the board next.
       tableWaitingOverlay.hidden = true;
+      game.stopLocalGame();
+      game.prepareForMatch(seat);
       game.configureRosterFromRoom(room, seat);
-      if (lastState && !network.isHost()) game.applyRemoteSnapshot(lastState);
     }
   },
   onRoomUpdated(room, seat) {
@@ -322,7 +342,19 @@ const network = new LudoNetworkClient({
       renderWaitingRoom(room, seat);
     } else {
       game.configureRosterFromRoom(room, seat);
+      if (room.gameOver) {
+        const humans = room.players.filter((p) => !p.isBot && p.connected);
+        const ready = humans.filter((p) => p.ready);
+        if (ready.length) {
+          const waiting = humans.filter((p) => !p.ready).map((p) => p.name).join(', ');
+          ui.showBanner(`Play again: ${ready.length}/${humans.length} ready${waiting ? ` • waiting for ${waiting}` : ''}`);
+        }
+      }
     }
+  },
+  onRoomLost(message) {
+    showHomeScreen();
+    ui.showBanner(message || 'Your seat in the room was released. Join again with the room code.', 'red');
   },
   onRoomError(msg) {
     mpStatusBanner.textContent = msg;
@@ -331,15 +363,27 @@ const network = new LudoNetworkClient({
   onMatchStarted(room, seat) {
     hideHomeScreen();
     tableWaitingOverlay.hidden = true;
+    if (victoryDialog.open) victoryDialog.close();
+    game.stopLocalGame();
+    game.prepareForMatch(seat);
     game.configureRosterFromRoom(room, seat);
-    if (network.isHost()) game.startNewMatch();
   },
-  onGameStateSync(state, ev) {
+  onGameUpdate(payload) {
     tableWaitingOverlay.hidden = true;
-    game.applyRemoteSnapshot(state, ev);
+    game.onGameUpdate(payload);
   },
-  onRemotePlayerAction(seat, action) {
-    game.handleRemoteAction(seat, action);
+  onActionError(error) {
+    game.onActionError(error);
+  },
+  onPlayerJoined(name) {
+    // Everyone already in the room hears a chime and sees who arrived.
+    sound.playJoinChime();
+    ui.showFloatingFX(`👋 ${name} joined!`, 'green');
+    ui.pushMatchFeed?.(`👋 ${name} joined the room`);
+  },
+  onPlayerLeft(name) {
+    sound.playLeaveTone();
+    ui.pushMatchFeed?.(`🚪 ${name} left the room`);
   },
   onRoomEmote(seat, _name, emote) {
     showSeatReaction(seat, emote);
@@ -418,10 +462,21 @@ rollDiceBtn.addEventListener('pointermove', (e) => {
 rollDiceBtn.addEventListener('pointerleave', hideDiceCursorTip);
 rollDiceBtn.addEventListener('click', () => game.requestRollDice());
 
+function nameIsValid(input) {
+  const name = input.value.trim();
+  input.setCustomValidity(name.length >= 2 ? '' : 'Please enter your name (at least 2 characters).');
+  if (name.length < 2) {
+    input.reportValidity();
+    input.focus();
+    return null;
+  }
+  return name;
+}
+
 homeForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const name = homeNameInput.value.trim();
-  if (name.length < 2) return;
+  const name = nameIsValid(homeNameInput);
+  if (!name) return;
   profile.displayName = name;
   saveProfile();
   syncProfileUI();
@@ -435,7 +490,8 @@ homeForm.addEventListener('submit', (e) => {
 });
 
 homeNameInput.addEventListener('input', () => {
-  const ch = (homeNameInput.value || 'P').trim().charAt(0).toUpperCase() || 'P';
+  homeNameInput.setCustomValidity('');
+  const ch = (homeNameInput.value || '?').trim().charAt(0).toUpperCase() || '?';
   homeAvatar.textContent = ch;
 });
 
@@ -443,7 +499,7 @@ const clearNameBtn = document.getElementById('clear-name-btn');
 if (clearNameBtn) {
   clearNameBtn.addEventListener('click', () => {
     homeNameInput.value = '';
-    homeAvatar.textContent = 'P';
+    homeAvatar.textContent = '?';
     homeNameInput.focus();
   });
 }
@@ -458,15 +514,21 @@ document.getElementById('close-rules-btn').addEventListener('click', () => rules
 
 document.getElementById('create-room-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  const rn = document.getElementById('create-room-name').value.trim() || 'ludo-party';
-  const pn = document.getElementById('create-player-name').value.trim() || profile.displayName;
+  const rn = document.getElementById('create-room-name').value.trim() || 'Ludo Party';
+  const pn = nameIsValid(document.getElementById('create-player-name'));
+  if (!pn) return;
+  profile.displayName = pn;
+  saveProfile();
   network.createRoom(rn, pn);
 });
 
 document.getElementById('join-room-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const rc = document.getElementById('join-room-code').value.trim();
-  const pn = document.getElementById('join-player-name').value.trim() || profile.displayName;
+  const pn = nameIsValid(document.getElementById('join-player-name'));
+  if (!pn) return;
+  profile.displayName = pn;
+  saveProfile();
   network.joinRoom(rc, pn);
 });
 
@@ -479,7 +541,7 @@ document.getElementById('overlay-copy-link-btn').addEventListener('click', () =>
   navigator.clipboard?.writeText(url);
   overlayWaitingStatus.textContent = `Copied invite link: ${url}`;
 });
-overlayAdminStartBtn.addEventListener('click', () => network.requestAdminStartMatch());
+overlayAdminStartBtn.addEventListener('click', () => network.requestStartMatch());
 document.getElementById('overlay-leave-room-btn').addEventListener('click', showHomeScreen);
 
 // Drawer Menu Actions
@@ -512,7 +574,7 @@ document.querySelectorAll('.emote-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const emote = btn.dataset.emote;
     if (network.isInRoom()) {
-      network.sendEmote(profile.displayName, emote);
+      network.sendEmote(emote);
     } else {
       showSeatReaction(game.localSeat, emote);
       const botSeats = [1, 2, 3];
